@@ -56,7 +56,7 @@ local function Notify(player, action)
     -- Player Avatar
     local icon = Instance.new("ImageLabel")
     icon.Size = UDim2.new(0,24,0,24)
-    icon.Position = UDim2.new(0,6,0,2)
+    icon.Position = UDim2.new(0,9,0,1)
     icon.BackgroundTransparency = 1
     icon.Image = Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
     icon.Parent = notif
@@ -64,9 +64,9 @@ local function Notify(player, action)
     -- Text with space after icon
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1,-40,1,0)
-    label.Position = UDim2.new(0,40,0,0) -- 10px icon + 4px spacing + extra
+    label.Position = UDim2.new(0,40,0,-1) -- 10px icon + 4px spacing + extra
     label.BackgroundTransparency = 1
-    label.Font = Enum.Font.RobotoMono
+    label.Font = Enum.Font.Code
     label.TextScaled = false
     label.TextSize = 17
     label.TextXAlignment = Enum.TextXAlignment.Left
@@ -74,6 +74,12 @@ local function Notify(player, action)
     label.RichText = true
     label.Text = string.format('<font color="rgb(255,0,0)">%s</font> <font color="rgb(0,255,0)">%s</font> <font color="rgb(255,255,255)">%s</font>', player.Name, player.DisplayName, action)
     label.Parent = notif
+
+    
+-- Dynamically set Frame size based on text
+local padding = 40 -- 6 left + 24 icon + 10 spacing
+local textWidth = math.clamp(label.TextBounds.X, 50, 1/0) -- clamp for min/max width
+notif.Size = UDim2.new(0, textWidth + padding, 0, 28)
 
     -- Insert at top of notifications table
     table.insert(notifications, 1, notif)
@@ -109,19 +115,19 @@ end
 local seenPlayers = {}
 Players.PlayerAdded:Connect(function(plr)
     if seenPlayers[plr.UserId] then
-        Notify(plr, "rejoined")
+        Notify(plr, "rejoined ")
     else
-        Notify(plr, "joined")
+        Notify(plr, "joined ")
         seenPlayers[plr.UserId] = true
     end
 end)
 
 Players.PlayerRemoving:Connect(function(plr)
-    Notify(plr, "left")
+    Notify(plr, "left ")
 end)
 
 -- Notify yourself immediately
 task.wait(0)
-Notify(LocalPlayer, "SpyUltra Loaded")
+Notify(LocalPlayer, "SpyUltra Loaded ")
 task.wait(0.5)
 Notify(LocalPlayer, "Follow me on RSCRIPTS [ https://rscripts.net/user/RafiHacker ] ")
