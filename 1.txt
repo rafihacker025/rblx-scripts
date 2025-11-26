@@ -1,0 +1,127 @@
+--// Modern Stackable Notification System Top-Right (Packed & Fixed)
+--// Place in StarterPlayerScripts (LocalScript)
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Fetch friend list once (executor-safe)
+local friends = {}
+pcall(function()
+    local fl = Players:GetFriendsAsync(LocalPlayer.UserId)
+    for _, f in ipairs(fl:GetCurrentPage()) do
+        friends[f.Id] = true
+    end
+end)
+
+-- UI Setup
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ModernNotifications"
+ScreenGui.Parent = game.CoreGui
+
+local NotificationHolder = Instance.new("Frame")
+NotificationHolder.Size = UDim2.new(1,0,1,0)
+NotificationHolder.BackgroundTransparency = 1
+NotificationHolder.Position = UDim2.new(0,0,0,-60)
+NotificationHolder.Parent = ScreenGui
+
+local notifications = {} -- Active notifications table
+
+-- Function to re-stack notifications downward
+local function ReStack()
+    local currentY = 10
+    for _, notif in ipairs(notifications) do
+        TweenService:Create(notif, TweenInfo.new(0.15, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+            Position = UDim2.new(1, -5, 0, currentY) -- X fixed, Y changes
+        }):Play()
+        currentY = currentY + notif.Size.Y.Offset + 4
+    end
+end
+
+-- Main notification function
+local function Notify(player, action)
+    local notif = Instance.new("Frame")
+    notif.Size = UDim2.new(0.5,0,0,28)
+    notif.AnchorPoint = Vector2.new(1,0)
+    notif.BackgroundColor3 = friends[player.UserId] and Color3.fromRGB(0,48,66) or Color3.fromRGB(20,20,20)
+    notif.BorderSizePixel = 0
+    notif.BackgroundTransparency = 0.15
+    notif.Parent = NotificationHolder
+
+    -- Fully Rounded
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0,14)
+    corner.Parent = notif
+
+    -- Player Avatar
+    local icon = Instance.new("ImageLabel")
+    icon.Size = UDim2.new(0,24,0,24)
+    icon.Position = UDim2.new(0,6,0,2)
+    icon.BackgroundTransparency = 1
+    icon.Image = Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
+    icon.Parent = notif
+
+    -- Text with space after icon
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1,-40,1,0)
+    label.Position = UDim2.new(0,40,0,0) -- 10px icon + 4px spacing + extra
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.RobotoMono
+    label.TextScaled = false
+    label.TextSize = 17
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextYAlignment = Enum.TextYAlignment.Center
+    label.RichText = true
+    label.Text = string.format('<font color="rgb(255,0,0)">%s</font> <font color="rgb(0,255,0)">%s</font> <font color="rgb(255,255,255)">%s</font>', player.Name, player.DisplayName, action)
+    label.Parent = notif
+
+    -- Insert at top of notifications table
+    table.insert(notifications, 1, notif)
+
+    -- Slide-in from off-screen right
+    notif.Position = UDim2.new(1, notif.Size.X.Offset + 300, 0, 10)
+    TweenService:Create(notif, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Position = UDim2.new(1, -10, 0, 10)
+    }):Play()
+
+    ReStack() -- stack all notifications downward immediately
+
+    -- Slide-out and destroy after 6 seconds
+    task.delay(6, function()
+        local slideOut = TweenService:Create(notif, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Position = UDim2.new(1, notif.Size.X.Offset + 300, 0, notif.Position.Y.Offset)
+        })
+        slideOut:Play()
+        slideOut.Completed:Wait()
+        -- Remove from table
+        for i = #notifications, 1, -1 do
+            if notifications[i] == notif then
+                table.remove(notifications, i)
+                break
+            end
+        end
+        notif:Destroy()
+        ReStack()
+    end)
+end
+
+-- Join / leave / rejoin logic
+local seenPlayers = {}
+Players.PlayerAdded:Connect(function(plr)
+    if seenPlayers[plr.UserId] then
+        Notify(plr, "rejoined")
+    else
+        Notify(plr, "joined")
+        seenPlayers[plr.UserId] = true
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(plr)
+    Notify(plr, "left")
+end)
+
+-- Notify yourself immediately
+task.wait(0)
+Notify(LocalPlayer, "SpyUltra Loaded")
+task.wait(0.5)
+Notify(LocalPlayer, "Follow me on RSCRIPTS [ https://rscripts.net/user/RafiHacker ] ")
