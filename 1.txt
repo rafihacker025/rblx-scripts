@@ -128,6 +128,6 @@ end)
 
 -- Notify yourself immediately
 task.wait(0)
-Notify(LocalPlayer, "SpyUltra Loaded ")
-task.wait(0.5)
+Notify(LocalPlayer, "SpyUltra Loaded" .. " " .. " " .. " " .. " " .. " " .. " " .. " " .. " " .. " " .. " " .. " " .. " " .. " " .. " " .. " " .. " " .. " " .. " " .. " " .. " " .. " " .. " " .. " " .. " " .. " ")
+task.wait(0.2)
 Notify(LocalPlayer, "Follow me on RSCRIPTS [ https://rscripts.net/user/RafiHacker ] ")
