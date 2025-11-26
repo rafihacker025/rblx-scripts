@@ -1,0 +1,138 @@
+--// Top-Left Notification System with Executor Detection
+--// Place in StarterPlayerScripts
+
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local MarketplaceService = game:GetService("MarketplaceService")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local TextService = game:GetService("TextService")
+
+-- GUI Holder
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "Notifier"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = PlayerGui
+
+local Holder = Instance.new("Frame")
+Holder.Size = UDim2.new(1, 0, 1, 0)
+Holder.Position = UDim2.new(0, 10, 0, 10)
+Holder.BackgroundTransparency = 1
+Holder.Parent = ScreenGui
+
+local notifications = {}
+
+-- Stack notifications downward without top gap
+local function ReStack()
+    local currentY = 0
+    for _, notif in ipairs(notifications) do
+        TweenService:Create(notif, TweenInfo.new(0.15, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+            Position = UDim2.new(0, 10, 0, currentY)
+        }):Play()
+        currentY = currentY + notif.Size.Y.Offset + 6
+    end
+end
+
+-- Generate random 9-character alphanumeric GID
+local function GenerateGID()
+    local charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    local gid = ""
+    for i = 1, 9 do
+        local j = math.random(1, #charset)
+        gid = gid .. charset:sub(j, j)
+    end
+    return gid
+end
+
+-- Real executor detection
+local executorName = 
+    (getexecutorname and getexecutorname()) or
+    (identifyexecutor and identifyexecutor()) or
+    "Unknown Executor"
+
+-- Notification creation
+local function Notify(text, includeServerType)
+    if includeServerType then
+        local serverStatus = (game.PrivateServerId and game.PrivateServerId ~= "") and "Private server" or "Public server"
+        text = text .. " | " .. serverStatus
+    end
+
+    -- Measure text to auto-size bubble
+    local textSize = TextService:GetTextSize(text, 14, Enum.Font.GothamSemibold, Vector2.new(1000, 40))
+    local bubbleWidth = math.clamp(textSize.X + 10, 0, 500) -- padding min/max
+
+    local Bubble = Instance.new("Frame")
+    Bubble.Size = UDim2.new(0, bubbleWidth, 0, 20)
+    Bubble.Position = UDim2.new(0, -bubbleWidth, 0, 0)
+    Bubble.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Bubble.BackgroundTransparency = 0.75
+    Bubble.BorderSizePixel = 0
+    Bubble.Parent = Holder
+    Bubble.ClipsDescendants = true
+
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(1, 0)
+    Corner.Parent = Bubble
+
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(1, -10, 1, 0)
+    Label.Position = UDim2.new(0, 5, 0, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = text
+    Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Font = Enum.Font.GothamSemibold
+    Label.TextSize = 14
+    Label.Parent = Bubble
+
+    table.insert(notifications, 1, Bubble)
+    ReStack()
+
+    -- Slide-in from left
+    TweenService:Create(Bubble, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Position = UDim2.new(0, 10, 0, Bubble.Position.Y.Offset)
+    }):Play()
+
+    -- Auto-remove after 5 seconds
+    task.delay(5, function()
+        local t = TweenService:Create(Bubble, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Position = UDim2.new(0, -bubbleWidth, 0, Bubble.Position.Y.Offset),
+            BackgroundTransparency = 1
+        })
+        t:Play()
+        t.Completed:Once(function()
+            for i = #notifications, 1, -1 do
+                if notifications[i] == Bubble then
+                    table.remove(notifications, i)
+                    break
+                end
+            end
+            if Bubble and Bubble.Parent then
+                Bubble:Destroy()
+            end
+            ReStack()
+        end)
+    end)
+end
+
+-- COLLECT DATA
+local username = LocalPlayer.Name
+local gameId = game.PlaceId
+local gameInfo = MarketplaceService:GetProductInfo(gameId)
+local gameName = gameInfo.Name
+local gid = GenerateGID()
+local playerCount = #Players:GetPlayers()
+local maxPlayers = Players.MaxPlayers
+
+-- SEND NOTIFICATIONS INLINE (server type included in first bubble)
+Notify("Players: " .. playerCount .. "/" .. maxPlayers, false)
+Wait(0.1)
+Notify("Executor: " .. executorName, false)
+Wait(0.1)
+Notify("Game Name: " .. gameName, false)
+Wait(0.1)
+Notify("Game ID: " .. gameId, false)
+Wait(0.1)
+Notify(username .. " Validated", true)
+Wait(0.1)
+Notify("Injected to the game successfully", false)
