@@ -20,7 +20,7 @@ local Holder = Instance.new("Frame")
 Holder.Size = UDim2.new(1, 0, 1, 0)
 Holder.Position = UDim2.new(0, 10, 0, 10)
 Holder.BackgroundTransparency = 1
-Holder.ZIndex = math.huge
+Holder.ZIndex = 1/0
 Holder.Parent = ScreenGui
 
 local notifications = {}
@@ -73,7 +73,7 @@ local function Notify(text, includeServerType)
     Bubble.BackgroundTransparency = 0.75
     Bubble.BorderSizePixel = 0
     Bubble.ClipsDescendants = true
-    Bubble.ZIndex = math.huge
+    Bubble.ZIndex = 1/0
     Bubble.Parent = Holder
 
     Instance.new("UICorner", Bubble).CornerRadius = UDim.new(1, 0)
@@ -87,7 +87,7 @@ local function Notify(text, includeServerType)
     Label.TextXAlignment = Enum.TextXAlignment.Left
     Label.Font = Enum.Font.GothamSemibold
     Label.TextSize = 14
-    Label.ZIndex = math.huge
+    Label.ZIndex = 1/0
     Label.Parent = Bubble
 
     table.insert(notifications, 1, Bubble)
@@ -158,4 +158,3 @@ task.wait(0.1)
 Notify(username .. " Validated", true)
 task.wait(0.1)
 Notify("Injected to the game successfully")
-
