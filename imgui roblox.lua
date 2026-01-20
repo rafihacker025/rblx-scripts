@@ -1,5 +1,7 @@
 --// ImGui-style Executor UI (Final Fixed Version)
---// True ImGui buttons, collapse indicator, ◢ resize, stable drag/resize
+--// Arrow = Minimize / Restore
+--// X = Close (Destroy)
+--// Separator text only (line invisible)
 --// CoreGui / loadstring safe
 
 local UIS = game:GetService("UserInputService")
@@ -34,12 +36,12 @@ titleBar.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 titleBar.BorderSizePixel = 0
 titleBar.Parent = window
 
--- Collapse indicator
+-- Minimize indicator
 local indicator = Instance.new("TextLabel")
 indicator.Size = UDim2.fromOffset(18, 18)
 indicator.Position = UDim2.fromOffset(1, -2)
 indicator.BackgroundTransparency = 1
-indicator.Text = "▼" -- starts open
+indicator.Text = "▼"
 indicator.Font = Enum.Font.Code
 indicator.TextSize = 12
 indicator.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -47,8 +49,9 @@ indicator.TextXAlignment = Enum.TextXAlignment.Center
 indicator.TextYAlignment = Enum.TextYAlignment.Center
 indicator.Parent = titleBar
 
+-- Title
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -32, 1, 0)
+title.Size = UDim2.new(1, -48, 1, 0)
 title.Position = UDim2.fromOffset(21, -1)
 title.BackgroundTransparency = 1
 title.Text = "Hello, world!"
@@ -57,6 +60,23 @@ title.TextSize = 14
 title.TextColor3 = Color3.fromRGB(220, 220, 220)
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = titleBar
+
+-- Close button (╳) - FULL WHITE
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.fromOffset(18, 18)
+closeBtn.Position = UDim2.new(1, -18, 0, 0)
+closeBtn.BackgroundTransparency = 1
+closeBtn.BorderSizePixel = 0
+closeBtn.Text = "╳"
+closeBtn.Font = Enum.Font.Code
+closeBtn.TextSize = 14
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.AutoButtonColor = false
+closeBtn.Parent = titleBar
+
+closeBtn.MouseButton1Click:Connect(function()
+    gui:Destroy()
+end)
 
 -- Content
 local content = Instance.new("Frame")
@@ -67,9 +87,10 @@ content.Parent = window
 
 local layout = Instance.new("UIListLayout")
 layout.Padding = UDim.new(0, 4)
+layout.SortOrder = Enum.SortOrder.LayoutOrder -- IMPORTANT
 layout.Parent = content
 
--- Resize grip as ◢ icon
+-- Resize grip (◢)
 local grip = Instance.new("TextLabel")
 grip.Size = UDim2.fromOffset(14, 14)
 grip.Position = UDim2.new(1, -13, 1, -13)
@@ -83,12 +104,13 @@ grip.TextXAlignment = Enum.TextXAlignment.Right
 grip.TextYAlignment = Enum.TextYAlignment.Bottom
 grip.Parent = window
 
--- Minimize toggle
+-- Minimize logic
 local minimized = false
 local savedSize
 
 local function toggleMinimize()
     minimized = not minimized
+
     if minimized then
         savedSize = window.Size
         content.Visible = false
@@ -103,24 +125,23 @@ local function toggleMinimize()
     end
 end
 
-titleBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        toggleMinimize()
-    end
-end)
-
 indicator.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         toggleMinimize()
     end
 end)
 
+-- Layout order counter (ensures correct order)
+local layoutIndex = 0
+
 -- ImGui-style flat button factory
 local function ImGuiButton(text, callback)
+    layoutIndex += 1
     local b = Instance.new("TextButton")
+    b.LayoutOrder = layoutIndex
     b.Size = UDim2.new(1, 0, 0, 19)
     b.BackgroundColor3 = Color3.fromRGB(39, 73, 113)
-    b.BorderSizePixel = 0          -- No border, flat like ImGui
+    b.BorderSizePixel = 0
     b.Text = text
     b.Font = Enum.Font.Code
     b.TextSize = 13
@@ -128,26 +149,42 @@ local function ImGuiButton(text, callback)
     b.AutoButtonColor = false
     b.Parent = content
 
-    -- Hover effect
-    b.MouseEnter:Connect(function()
-        b.BackgroundColor3 = Color3.fromRGB(39, 73, 113)
-    end)
-    b.MouseLeave:Connect(function()
-        b.BackgroundColor3 = Color3.fromRGB(39, 73, 113)
-    end)
-
-    -- Click
     b.MouseButton1Click:Connect(callback)
 end
 
--- Loadstring buttons
+-- ImGui-style separator with text (line invisible)
+local function ImGuiTextSeparator(text)
+    layoutIndex += 1
+    local holder = Instance.new("Frame")
+    holder.LayoutOrder = layoutIndex
+    holder.Size = UDim2.new(1, 0, 0, 9)
+    holder.BackgroundTransparency = 1
+    holder.Parent = content
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.Font = Enum.Font.Code
+    label.TextSize = 14
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextXAlignment = Enum.TextXAlignment.Center
+    label.TextYAlignment = Enum.TextYAlignment.Center
+    label.Parent = holder
+end
+
+-- Buttons + Separator (proper order)
 ImGuiButton("Load Script A", function()
     loadstring(game:HttpGet("https://example.com/a.lua"))()
 end)
 
+ImGuiTextSeparator("hello world")
+
 ImGuiButton("Load Script B", function()
     loadstring(game:HttpGet("https://example.com/b.lua"))()
 end)
+
+ImGuiTextSeparator("")
 
 ImGuiButton("Load Script C", function()
     loadstring(game:HttpGet("https://example.com/c.lua"))()
@@ -184,12 +221,11 @@ UIS.InputChanged:Connect(function(input)
             startPos.X.Offset + delta.X,
             startPos.Y.Offset + delta.Y
         )
-    elseif resizing then
-        if minimized then return end
+    elseif resizing and not minimized then
         local delta = input.Position - resizeStart
         window.Size = UDim2.fromOffset(
-            math.min(1/0, startSize.X.Offset + delta.X),
-            math.max(-1/0, startSize.Y.Offset + delta.Y)
+            startSize.X.Offset + delta.X,
+            startSize.Y.Offset + delta.Y
         )
     end
 end)
