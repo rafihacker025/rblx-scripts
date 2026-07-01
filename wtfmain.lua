@@ -368,7 +368,7 @@ local circle = Instance.new("Frame")
 circle.Name = "Circle"
 circle.Size = UDim2.new(0, 18, 0, 18)
 circle.Position = UDim2.new(0, 138, 1, -30)  -- Bottom left
-circle.BackgroundColor3 = Color3.fromRGB(256, 0, 0)
+circle.BackgroundColor3 = Color3.fromRGB(0, 256, 0)
 circle.BorderSizePixel = 0
 circle.Parent = screenGui
 
@@ -379,7 +379,7 @@ uiCorner.Parent = circle
 
 -- Subtle green border
 local uiStroke = Instance.new("UIStroke")
-uiStroke.Color = Color3.fromRGB(256, 0, 0)
+uiStroke.Color = Color3.fromRGB(0, 256, 0)
 uiStroke.Thickness = 1
 uiStroke.Parent = circle
 
